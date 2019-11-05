@@ -54,7 +54,7 @@ if __name__ == '__main__':
     space.add(tank_control_body, tank_body, tank_collider, pivot, gear)
     
     # add a ball
-    mass = 10
+    mass = 40
     size = 0.05, 0.08
     circle = Circle(win.context, prog, scale=size, 
                     fill_color=(0.9, 0.3, 0.3, 0.8))
@@ -68,19 +68,20 @@ if __name__ == '__main__':
     pivot = pymunk.constraint.PivotJoint(static_body, cbody, (0, 0), (0, 0))
     pivot.max_bias = 0
     pivot.max_force = 11
-    gear = pymunk.constraint.GearJoint(static_body, cbody, 0, 1.0)
-    gear.error_bias = 0
-    gear.max_bias = 0.00001
-    gear.max_force = 0
+    #gear = pymunk.constraint.GearJoint(static_body, cbody, 0, 1.0)
+    #gear.error_bias = 0
+    #gear.max_bias = 0.1
+    #gear.max_force = 1000
 
-    space.add(cbody, cshape, pivot, gear)
+    space.add(cbody, cshape, pivot)
 
     # boundaries
     bbody = pymunk.Body(body_type=pymunk.Body.STATIC)
-    lwall = pymunk.Segment(bbody, [-0.5, -0.5], [-0.5, 0.5], 0.01)
-    rwall = pymunk.Segment(bbody, [0.5, 0.5], [0.5, -0.5], 0.01)
-    bwall = pymunk.Segment(bbody, [-0.5, -0.5], [0.5, -0.5], 0.01)
-    twall = pymunk.Segment(bbody, [-0.5, 0.5], [0.5, 0.5], 0.01)
+    lwall = pymunk.Segment(bbody, [-0.8, -0.5], [-0.8, 0.5], 0.05)
+    rwall = pymunk.Segment(bbody, [0.8, 0.5], [0.8, -0.5], 0.05)
+    bwall = pymunk.Segment(bbody, [-0.8, -0.5], [0.8, -0.5], 0.05)
+    twall = pymunk.Segment(bbody, [-0.8, 0.5], [0.8, 0.5], 0.05)
+    lwall.elasticity = rwall.elasticity = bwall.elasticity = twall.elasticity = 0.9
     space.add(bbody, lwall, rwall, bwall, twall)
 
     dev = MpDevice(TestSerial())
@@ -90,15 +91,16 @@ if __name__ == '__main__':
             if data is not None:
                 # forward
                 d1 = data[-1]/4096.0
-                tank_control_body.angular_velocity = (d1[2] - d1[3]) * 4
+                tank_control_body.angular_velocity = (d1[2] - d1[3]) * 16
                 # get angle (radians)
                 current_angle = tank_control_body.angle
-                diff_vel = d1[0] - d1[1]
+                diff_vel = (d1[0] - d1[1]) * 2
                 nv = diff_vel * cos(current_angle)
                 nw = diff_vel * sin(current_angle)
                 tank_control_body.velocity = (nv, nw)
             
-            space.step(1/60)
+            for i in range(4):
+                space.step(1/(60*4))
             sqr.position = tank_body.position
             sqr.rotation = tank_body.angle * 180/pi
             sqr.draw(cam)
@@ -107,4 +109,5 @@ if __name__ == '__main__':
             circle.rotation = cbody.angle * 180/pi
             circle.draw(cam)
             win.flip()
+            if win.dt > 0.02: print(win.dt)
 
