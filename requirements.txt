@@ -1,3 +1,6 @@
 pyserial
 toon >= 0.12.7
-
+pymunk
+pyglet >= 1.4.5
+moderngl
+mglg # `pip install git+https://github.com/aforren1/mglg`
