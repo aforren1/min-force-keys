@@ -1,5 +1,5 @@
 from mglg.graphics.shaders import FlatShader
-from mglg.graphics.shape2d import Square, square_vertices
+from mglg.graphics.shape2d import Square, Circle
 from mglg.graphics.camera import Camera
 import pymunk
 
@@ -53,6 +53,36 @@ if __name__ == '__main__':
 
     space.add(tank_control_body, tank_body, tank_collider, pivot, gear)
     
+    # add a ball
+    mass = 10
+    size = 0.05, 0.08
+    circle = Circle(win.context, prog, scale=size, 
+                    fill_color=(0.9, 0.3, 0.3, 0.8))
+    inertia = pymunk.moment_for_box(mass, size)
+    cbody = pymunk.Body(mass, inertia)
+    cbody.position = 0.2, 0.2
+    cshape = pymunk.Poly.create_box(cbody, size=size)
+    cshape.elasticity = 0.9
+    cshape.friction = 0.1
+
+    pivot = pymunk.constraint.PivotJoint(static_body, cbody, (0, 0), (0, 0))
+    pivot.max_bias = 0
+    pivot.max_force = 11
+    gear = pymunk.constraint.GearJoint(static_body, cbody, 0, 1.0)
+    gear.error_bias = 0
+    gear.max_bias = 0.00001
+    gear.max_force = 0
+
+    space.add(cbody, cshape, pivot, gear)
+
+    # boundaries
+    bbody = pymunk.Body(body_type=pymunk.Body.STATIC)
+    lwall = pymunk.Segment(bbody, [-0.5, -0.5], [-0.5, 0.5], 0.01)
+    rwall = pymunk.Segment(bbody, [0.5, 0.5], [0.5, -0.5], 0.01)
+    bwall = pymunk.Segment(bbody, [-0.5, -0.5], [0.5, -0.5], 0.01)
+    twall = pymunk.Segment(bbody, [-0.5, 0.5], [0.5, 0.5], 0.01)
+    space.add(bbody, lwall, rwall, bwall, twall)
+
     dev = MpDevice(TestSerial())
     with dev:
         while True:
@@ -67,10 +97,14 @@ if __name__ == '__main__':
                 nv = diff_vel * cos(current_angle)
                 nw = diff_vel * sin(current_angle)
                 tank_control_body.velocity = (nv, nw)
+            
             space.step(1/60)
             sqr.position = tank_body.position
-            print(tank_control_body.position)
             sqr.rotation = tank_body.angle * 180/pi
             sqr.draw(cam)
+
+            circle.position = cbody.position
+            circle.rotation = cbody.angle * 180/pi
+            circle.draw(cam)
             win.flip()
 
